@@ -102,6 +102,31 @@ const server = http.createServer(async (req, res) => {
     return sendJson(res, 200, { ok: true, keyConfigured: !!API_KEY, model: MODEL });
   }
 
+  // Diagnostic — checks whether the currently-configured API key is accepted
+  // by Google (reports prefix+length, NOT the full key).
+  if (req.method === 'GET' && url.pathname === '/api/diag') {
+    let accepted = null;
+    let msg = '';
+    try {
+      const r = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(API_KEY)}`
+      );
+      accepted = r.ok;
+      const j = await r.json().catch(() => ({}));
+      msg = accepted ? `OK (${(j.models || []).length} models)` : (j.error?.message || 'rejected');
+    } catch (e) {
+      msg = 'network error: ' + e.message;
+    }
+    return sendJson(res, 200, {
+      keyConfigured: !!API_KEY,
+      keyPrefix: API_KEY ? API_KEY.slice(0, 3) : null,
+      keyLength: API_KEY ? API_KEY.length : 0,
+      accepted: accepted,
+      msg: msg,
+      model: MODEL,
+    });
+  }
+
   // Main ask endpoint.
   if (req.method === 'POST' && url.pathname === '/api/ask') {
     if (!API_KEY) {
