@@ -1,0 +1,15 @@
+# Render Blueprint — deploy AceIt AI with one click (render.yaml)
+# Docs: https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: aceit-ai
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node server.js
+    healthCheckPath: /
+    envVars:
+      - key: GEMINI_API_KEY_WWW
+        sync: false   # set this manually in the Render dashboard (never commit the key)
+      - key: GEMINI_MODEL
+        value: gemini-3.6-flash
