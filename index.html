@@ -320,7 +320,7 @@
       <p>This app talks to a local Gemini proxy. Point it at where your <b>server.js</b> is running.</p>
       <div class="field">
         <label>Proxy URL</label>
-        <input type="text" id="proxyUrl" placeholder="http://localhost:8787">
+        <input type="text" id="proxyUrl" placeholder="(空欄=同一オリジン) 例: http://localhost:8787">
       </div>
       <div class="conn-status" id="connStatus"><span class="status-dot na"></span>Not tested yet</div>
       <div class="btn-row">
@@ -336,7 +336,7 @@
   'use strict';
   /* ============ STATE ============ */
   const FREE_LIMIT = 15;
-  const DEFAULTS = { proxyUrl: 'http://localhost:8787' };
+  const DEFAULTS = { proxyUrl: '' };  // 空 = 同一オリジンで自動接続(Render/ローカル両対応)
   let cfg = Object.assign({}, DEFAULTS, JSON.parse(localStorage.getItem('aceit_cfg') || '{}'));
   function saveCfg(){ localStorage.setItem('aceit_cfg', JSON.stringify(cfg)); }
 
@@ -359,7 +359,7 @@
   function renderMeter(){
     const left = Math.max(0, FREE_LIMIT - state.questions);
     $('meterText').textContent = 'Free Plan: ' + left + '/' + FREE_LIMIT + ' Questions Left Today · ' +
-      (cfg.proxyUrl || 'no proxy set');
+      (cfg.proxyUrl ? ('via ' + cfg.proxyUrl) : 'same origin');
   }
 
   /* ============ SAFE MARKDOWN RENDERER ============ */
