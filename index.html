@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>AceIt AI — Your 24/7 AI Tutor</title>
+<style>
+  :root{
+    --blue:#2f6bff;
+    --green:#22c55e;
+    --accent:#2f6bff;
+    --grad:linear-gradient(135deg,#2f6bff 0%,#22c55e 100%);
+    --bg:#f3f5fb;
+    --card:#ffffff;
+    --ink:#111827;
+    --muted:#6b7280;
+    --line:#e5e7eb;
+    --danger:#ef4444;
+    --radius:18px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;min-height:100%}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg);color:var(--ink);
+    display:flex;flex-direction:column;min-height:100vh;
+  }
+
+  header.app{
+    background:var(--card);border-bottom:1px solid var(--line);
+    padding:14px 18px;position:sticky;top:0;z-index:30;
+    display:flex;align-items:center;gap:12px;
+  }
+  .brand{display:flex;align-items:center;gap:10px;flex:1;min-width:0}
+  .logo{width:42px;height:42px;border-radius:11px;background:var(--grad);
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;
+    box-shadow:0 6px 16px rgba(34,197,94,.28);}
+  .logo .aplus{color:#fff;font-weight:900;font-size:20px;line-height:1}
+  .brand .name{font-size:18px;font-weight:900;letter-spacing:-.3px;background:var(--grad);
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .brand .sub{font-size:11px;color:var(--muted);margin-top:1px}
+  .pro-btn{
+    border:none;background:var(--grad);color:#fff;font-weight:800;font-size:13px;
+    padding:9px 14px;border-radius:999px;cursor:pointer;white-space:nowrap;
+    box-shadow:0 4px 12px rgba(47,107,255,.3);transition:transform .12s ease;}
+  .pro-btn:active{transform:scale(.95)}
+  .icon-btn{border:none;background:transparent;font-size:20px;cursor:pointer;padding:6px;border-radius:10px}
+  .icon-btn:hover{background:#f1f5f9}
+
+  .meter{max-width:720px;width:100%;margin:10px auto 0;padding:0 16px;
+    font-size:11px;color:var(--muted)}
+  .meter b{color:var(--accent)}
+  .status-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:5px}
+  .status-dot.ok{background:var(--green)}
+  .status-dot.bad{background:var(--danger)}
+  .status-dot.na{background:var(--muted)}
+
+  main{flex:1;padding:16px 16px 96px;max-width:720px;margin:0 auto;width:100%}
+
+  .card{background:var(--card);border-radius:var(--radius);padding:18px;
+    box-shadow:0 2px 10px rgba(15,23,42,.05);border:1px solid var(--line);margin-bottom:16px}
+  h2.section{font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;
+    color:var(--muted);margin:0 0 12px}
+
+  .subjects{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .subject{border:1px solid var(--line);border-radius:14px;padding:14px;text-align:center;
+    cursor:pointer;background:#fafbff;transition:all .15s;position:relative}
+  .subject .emoji{font-size:26px}
+  .subject .label{font-weight:700;font-size:13px;margin-top:4px}
+  .subject.sel{border:2px solid var(--accent);background:#eef4ff;transform:translateY(-1px)}
+  .subject.sel::after{content:"\2713";position:absolute;top:8px;right:10px;color:var(--accent);font-weight:900}
+
+  .field{margin-top:14px}
+  .field label{font-size:12px;font-weight:700;color:var(--muted);display:block;margin-bottom:6px}
+  select,textarea,input[type=text]{
+    width:100%;border:1px solid var(--line);border-radius:12px;padding:12px;font-size:15px;
+    font-family:inherit;background:#fff;color:var(--ink)}
+  textarea{min-height:90px;resize:vertical}
+
+  .ask-row{display:flex;gap:10px;margin-top:12px}
+  .cam-btn{width:52px;height:52px;flex-shrink:0;border-radius:14px;border:1px solid var(--line);
+    background:#fafbff;cursor:pointer;font-size:22px;display:flex;align-items:center;justify-content:center;
+    position:relative}
+  .cam-btn .tag{position:absolute;top:-7px;right:-7px;background:var(--grad);color:#fff;font-size:8px;
+    font-weight:900;padding:2px 6px;border-radius:999px}
+  .send-btn{flex:1;background:var(--grad);color:#fff;font-weight:800;font-size:15px;border:none;
+    border-radius:14px;cursor:pointer;transition: opacity .2s;padding:16px}
+  .send-btn:active{opacity:.85}
+  .send-btn:disabled{cursor:not-allowed;opacity:.7}
+
+  .answer{display:none;margin-top:4px}
+  .answer.show{display:block;animation:fadeIn .4s ease}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+  .answer .markdown{line-height:1.65;font-size:15px;word-break:break-word}
+  .answer .markdown h1,.answer .markdown h2,.answer .markdown h3{font-size:16px;margin:14px 0 6px;line-height:1.3}
+  .answer .markdown p{margin:0 0 10px}
+  .answer .markdown ul,.answer .markdown ol{margin:0 0 10px;padding-left:22px}
+  .answer .markdown code{background:#eef2ff;padding:1px 5px;border-radius:6px;font-size:13px}
+  .answer .markdown pre{background:#0f172a;color:#e2e8f0;padding:12px;border-radius:10px;overflow:auto;font-size:13px}
+  .answer .markdown pre code{background:none;color:inherit;padding:0}
+  .answer .markdown b{color:var(--accent)}
+
+  .loader{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:14px;padding:6px 0}
+  .spinner{width:18px;height:18px;border:3px solid #e2e8f0;border-top-color:var(--accent);
+    border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  .error{background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;border-radius:12px;
+    padding:12px 14px;font-size:14px;margin-top:12px}
+  .retry-btn{margin-top:10px;background:var(--ink);color:#fff;border:none;border-radius:10px;
+    padding:8px 14px;font-weight:700;cursor:pointer}
+
+  .actions{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+  .mini-btn{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:10px;
+    padding:8px 12px;font-size:12px;font-weight:700;cursor:pointer}
+  .mini-btn:active{background:#f3f5fb}
+
+  .flashcard{margin-top:16px;border-radius:var(--radius);overflow:hidden;border:1px solid var(--line)}
+  .flashcard .fc-head{background:var(--grad);color:#fff;padding:10px 14px;font-weight:800;font-size:13px;
+    display:flex;justify-content:space-between;align-items:center}
+  .flashcard .fc-head .add{background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:8px;
+    padding:4px 10px;font-size:11px;font-weight:800;cursor:pointer}
+  .flashcard .fc-body{background:#fff;padding:14px;font-size:14px;line-height:1.5}
+  .flashcard .fc-front{font-weight:700;color:var(--ink);margin-bottom:8px}
+  .flashcard .fc-back{color:var(--muted);border-top:1px dashed var(--line);padding-top:8px}
+
+  .lib-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .fc-tile{perspective:1000px;height:150px;cursor:pointer;position:relative}
+  .fc-tile-inner{position:relative;width:100%;height:100%;transition:transform .4s;transform-style:preserve-3d}
+  .fc-tile.flipped .fc-tile-inner{transform:rotateY(180deg)}
+  .fc-face{position:absolute;inset:0;backface-visibility:hidden;border-radius:14px;border:1px solid var(--line);
+    background:#fff;padding:14px;display:flex;align-items:center;justify-content:center;text-align:center;
+    font-size:13px;font-weight:700;box-shadow:0 2px 8px rgba(15,23,42,.05);word-break:break-word}
+  .fc-face.back{transform:rotateY(180deg);background:#eef4ff;color:var(--ink);font-weight:600}
+  .fc-tile .subj-badge{position:absolute;top:8px;left:8px;font-size:10px;background:var(--grad);
+    color:#fff;padding:2px 8px;border-radius:999px;z-index:2}
+  .fc-tile .del-btn{position:absolute;top:8px;right:8px;font-size:12px;background:rgba(0,0,0,.06);
+    border:none;border-radius:50%;width:22px;height:22px;cursor:pointer;z-index:2;color:#7f1d1d}
+  .empty{color:var(--muted);text-align:center;padding:30px 0;font-size:14px}
+  .export-btn{width:100%;margin-top:14px;border:1px solid var(--line);background:#fff;color:var(--ink);
+    border-radius:12px;padding:12px;font-weight:700;cursor:pointer}
+  .export-btn:active{background:#f3f5fb}
+
+  .hist-item{border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px;cursor:pointer}
+  .hist-item:hover{border-color:var(--accent)}
+  .hist-item .q{font-weight:700;font-size:14px;margin-bottom:4px}
+  .hist-item .meta{font-size:11px;color:var(--muted)}
+
+  .row{display:flex;justify-content:space-between;align-items:center;padding:13px 0;
+    border-bottom:1px solid var(--line);font-size:14px}
+  .row:last-child{border-bottom:none}
+  .row .muted{color:var(--muted)}
+  .plan-badge{background:var(--grad);color:#fff;font-weight:800;font-size:12px;padding:4px 10px;border-radius:999px}
+
+  nav.tabs{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--line);
+    display:flex;justify-content:space-around;padding:6px 0 calc(6px + env(safe-area-inset-bottom));z-index:40}
+  .tab{flex:1;text-align:center;padding:8px 0;cursor:pointer;color:var(--muted);font-size:10px;font-weight:700}
+  .tab .ic{font-size:20px;display:block;margin-bottom:2px}
+  .tab.active{color:var(--accent)}
+  .view{display:none}
+  .view.active{display:block}
+
+  .overlay{position:fixed;inset:0;background:rgba(15,23,42,.55);backdrop-filter:blur(3px);
+    display:none;align-items:center;justify-content:center;z-index:100;padding:20px}
+  .overlay.show{display:flex}
+  .modal{background:#fff;border-radius:24px;max-width:400px;width:100%;padding:28px 24px;text-align:left;
+    box-shadow:0 20px 50px rgba(0,0,0,.25);animation:pop .25s ease;position:relative}
+  @keyframes pop{from{transform:scale(.85);opacity:0}to{transform:scale(1);opacity:1}}
+  .modal h3{font-size:18px;margin:0 0 12px;letter-spacing:-.3px}
+  .modal p{color:var(--muted);font-size:13px;line-height:1.5;margin:0 0 12px}
+  .modal .field{margin-top:12px}
+  .modal .field input{font-size:14px}
+  .modal .conn-status{font-size:12px;color:var(--muted);margin-top:8px}
+  .modal .btn-row{display:flex;gap:10px;margin-top:16px}
+  .modal .got{flex:1;background:var(--ink);color:#fff;border:none;border-radius:14px;padding:12px;
+    font-weight:800;font-size:14px;cursor:pointer}
+  .modal .test{flex:1;background:#fff;color:var(--ink);border:1px solid var(--line);border-radius:14px;
+    padding:12px;font-weight:800;font-size:14px;cursor:pointer}
+  .close-x{position:absolute;top:14px;right:18px;border:none;background:none;font-size:20px;cursor:pointer;color:var(--muted)}
+  .toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#0f172a;color:#fff;
+    padding:10px 18px;border-radius:999px;font-size:13px;font-weight:700;z-index:200;opacity:0;
+    transition:opacity .3s;pointer-events:none;max-width:90%;text-align:center}
+  .toast.show{opacity:1}
+
+  /* Coming Soon モーダル (元のHTML由来) */
+  .modal.center{text-align:center}
+  .modal .rocket{font-size:52px;margin-bottom:8px}
+  .modal .badge{display:inline-block;background:var(--grad);color:#fff;font-size:11px;font-weight:900;
+    padding:4px 12px;border-radius:999px;margin-bottom:12px}
+  .modal .note{font-size:11px;color:var(--muted);margin-top:12px}
+</style>
+</head>
+<body>
+
+  <header class="app">
+    <div class="brand">
+      <div class="logo"><span class="aplus">A+</span></div>
+      <div>
+        <div class="name">AceIt AI</div>
+        <div class="sub">Your 24/7 AI Tutor</div>
+      </div>
+    </div>
+    <button class="icon-btn" id="settingsBtn" title="Settings">⚙️</button>
+    <button class="pro-btn" id="proBtn">⚡ PRO Upgrade</button>
+  </header>
+
+  <div class="meter">
+    <span id="meterText">Connecting to AI service…</span>
+  </div>
+
+  <main>
+    <!-- ============ HOME ============ -->
+    <section class="view active" id="view-home">
+      <div class="card">
+        <h2 class="section">Pick a subject</h2>
+        <div class="subjects" id="subjects">
+          <div class="subject sel" data-sub="Math"><div class="emoji">📐</div><div class="label">Math</div></div>
+          <div class="subject" data-sub="Science"><div class="emoji">🔬</div><div class="label">Science</div></div>
+          <div class="subject" data-sub="Social Studies"><div class="emoji">🌍</div><div class="label">Social Studies</div></div>
+          <div class="subject" data-sub="English / General"><div class="emoji">💡</div><div class="label">English / General</div></div>
+        </div>
+
+        <div class="field">
+          <label>Grade Level</label>
+          <select id="grade">
+            <option>Middle School</option>
+            <option selected>High School</option>
+            <option>College</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Ask any homework question</label>
+          <textarea id="q" placeholder="Ask any homework question or paste a problem..."></textarea>
+        </div>
+
+        <div class="ask-row">
+          <button class="cam-btn" id="camBtn" title="PRO Feature">📷<span class="tag">PRO</span></button>
+          <button class="send-btn" id="sendBtn">Ask AceIt AI</button>
+        </div>
+      </div>
+
+      <div class="answer" id="answerBox">
+        <div class="card">
+          <h2 class="section" id="answerHead">Tutor Answer</h2>
+          <div id="answerArea"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ HISTORY ============ -->
+    <section class="view" id="view-history">
+      <div class="card">
+        <h2 class="section">🕘 Recent Questions</h2>
+        <div id="histList"></div>
+        <div class="empty" id="histEmpty">No questions yet.</div>
+        <button class="export-btn" id="clearHistBtn">🗑️ Clear History</button>
+      </div>
+    </section>
+
+    <!-- ============ FLASHCARDS ============ -->
+    <section class="view" id="view-lib">
+      <div class="card">
+        <h2 class="section">📚 Your Flashcards</h2>
+        <div class="lib-grid" id="libGrid"></div>
+        <div class="empty" id="libEmpty">No flashcards yet. Ask a question on the Home tab!</div>
+        <button class="export-btn" id="exportBtn">⬇️ Export to CSV</button>
+      </div>
+    </section>
+
+    <!-- ============ PROFILE ============ -->
+    <section class="view" id="view-profile">
+      <div class="card">
+        <h2 class="section">👤 Profile</h2>
+        <div class="row"><span>Current Plan</span><span class="plan-badge">Free</span></div>
+        <div class="row"><span>Plan</span><span class="muted">Free — 15 questions/day</span></div>
+        <div class="row" id="profileUpgrade"><span>⚡ Upgrade to PRO</span><span class="pro-btn">Upgrade</span></div>
+        <div class="row"><span>AI Service</span><span class="muted" id="profileService">Gemini (via proxy)</span></div>
+        <div class="row" id="settingsRow"><span>⚙️ Connection Settings</span><span class="muted">›</span></div>
+      </div>
+      <div class="card">
+        <h2 class="section">⚙️ Support</h2>
+        <div class="row" id="tosRow"><span>Terms of Service</span><span class="muted">›</span></div>
+        <div class="row" id="supportRow"><span>Contact Support</span><span class="muted">›</span></div>
+        <div class="row" id="cancelRow"><span>Cancel Subscription</span><span class="muted">›</span></div>
+      </div>
+      <div class="card">
+        <div style="text-align:center;color:var(--muted);font-size:12px;line-height:1.6">
+          AceIt AI v3.0 · Powered by Google Gemini · "Ace Every Exam in Seconds."
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <nav class="tabs">
+    <div class="tab active" data-view="home"><span class="ic">🏠</span>Home</div>
+    <div class="tab" data-view="history"><span class="ic">🕘</span>History</div>
+    <div class="tab" data-view="lib"><span class="ic">🃏</span>Flashcards</div>
+    <div class="tab" data-view="profile"><span class="ic">👤</span>Profile</div>
+  </nav>
+
+  <!-- ============ COMING SOON MODAL (元のHTML由来) ============ -->
+  <div class="overlay" id="csOverlay">
+    <div class="modal center">
+      <button class="close-x" id="csClose">✕</button>
+      <div class="rocket">🚀</div>
+      <span class="badge">PRO FEATURE</span>
+      <h3>Coming Soon!</h3>
+      <p>AceIt AI PRO is coming soon! Stay tuned for unlimited access and instant photo scanning.</p>
+      <button class="got" id="csGot">Got it</button>
+      <div class="note">No payment required yet — we'll let you know when it launches.</div>
+    </div>
+  </div>
+
+  <!-- ============ SETTINGS MODAL ============ -->
+  <div class="overlay" id="overlay">
+    <div class="modal">
+      <button class="close-x" id="closeModal">✕</button>
+      <h3>⚙️ AI Connection</h3>
+      <p>This app talks to a local Gemini proxy. Point it at where your <b>server.js</b> is running.</p>
+      <div class="field">
+        <label>Proxy URL</label>
+        <input type="text" id="proxyUrl" placeholder="http://localhost:8787">
+      </div>
+      <div class="conn-status" id="connStatus"><span class="status-dot na"></span>Not tested yet</div>
+      <div class="btn-row">
+        <button class="test" id="testBtn">Test Connection</button>
+        <button class="got" id="saveSettings">Save & Close</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+  'use strict';
+  /* ============ STATE ============ */
+  const FREE_LIMIT = 15;
+  const DEFAULTS = { proxyUrl: 'http://localhost:8787' };
+  let cfg = Object.assign({}, DEFAULTS, JSON.parse(localStorage.getItem('aceit_cfg') || '{}'));
+  function saveCfg(){ localStorage.setItem('aceit_cfg', JSON.stringify(cfg)); }
+
+  let state = load();
+  function load(){
+    try{ const raw = localStorage.getItem('aceit_state'); if(raw) return JSON.parse(raw); }catch(e){}
+    return { questions:0, date:today(), cards:[], history:[] };
+  }
+  function save(){ localStorage.setItem('aceit_state', JSON.stringify(state)); }
+  function today(){ const d=new Date(); return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate(); }
+  function resetIfNewDay(){
+    if(state.date !== today()){ state.date = today(); state.questions = 0; save(); }
+  }
+
+  let activeSubject = 'Math';
+  let answersRetry = null;
+
+  const $ = id => document.getElementById(id);
+
+  function renderMeter(){
+    const left = Math.max(0, FREE_LIMIT - state.questions);
+    $('meterText').textContent = 'Free Plan: ' + left + '/' + FREE_LIMIT + ' Questions Left Today · ' +
+      (cfg.proxyUrl || 'no proxy set');
+  }
+
+  /* ============ SAFE MARKDOWN RENDERER ============ */
+  function escapeHtml(s){
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+            .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+  function mdToHtml(md){
+    let s = escapeHtml(md);
+    s = s.replace(/```(\w*)\n([\s\S]*?)```/g, (_, __, code) => '<pre><code>'+code+'</code></pre>');
+    s = s.replace(/^###\s+(.+)$/gm, '<h3>$1</h3>');
+    s = s.replace(/^##\s+(.+)$/gm, '<h2>$1</h2>');
+    s = s.replace(/^#\s+(.+)$/gm, '<h1>$1</h1>');
+    s = s.replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>');
+    s = s.replace(/\*([^*]+)\*/g, '<i>$1</i>');
+    s = s.replace(/`([^`]+)`/g, '<code>$1</code>');
+    s = s.replace(/^[\s]*[-*]\s+(.+)$/gm, '<li>$1</li>');
+    s = s.replace(/(<li>[\s\S]*?<\/li>)/g, m => '<ul>'+m+'</ul>');
+    s = s.replace(/<\/ul><ul>/g, '');
+    s = s.replace(/^\d+\.\s+(.+)$/gm, '<li>$1</li>');
+    s = s.replace(/(<li>[\s\S]*?<\/li>)/g, m => '<ol>'+m+'</ol>');
+    s = s.replace(/<\/ol><ol>/g, '');
+    s = s.replace(/\n{2,}/g, '</p><p>');
+    s = s.replace(/\n/g, '<br>');
+    return '<p>'+s+'</p>';
+  }
+
+  /* ============ TABS ============ */
+  document.querySelectorAll('.tab').forEach(t=>{
+    t.addEventListener('click', ()=>{
+      document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+      t.classList.add('active');
+      document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+      $('view-'+t.dataset.view).classList.add('active');
+      if(t.dataset.view==='lib') renderLibrary();
+      if(t.dataset.view==='history') renderHistory();
+    });
+  });
+
+  /* ============ SUBJECT SELECTOR ============ */
+  $('subjects').addEventListener('click', e=>{
+    const s = e.target.closest('.subject'); if(!s) return;
+    document.querySelectorAll('.subject').forEach(x=>x.classList.remove('sel'));
+    s.classList.add('sel');
+    activeSubject = s.dataset.sub.toLowerCase();
+  });
+
+  /* ============ TOAST ============ */
+  let toastTimer=null;
+  function toast(msg){
+    const t=$('toast'); t.textContent=msg; t.classList.add('show');
+    clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'), 2200);
+  }
+
+  /* ============ COMING SOON (元のHTML由来のPRO導線) ============ */
+  function showComingSoon(){ $('csOverlay').classList.add('show'); }
+  function hideComingSoon(){ $('csOverlay').classList.remove('show'); }
+  $('csGot').addEventListener('click', hideComingSoon);
+  $('csClose').addEventListener('click', hideComingSoon);
+  $('csOverlay').addEventListener('click', e=>{ if(e.target===$('csOverlay')) hideComingSoon(); });
+  // PRO 導線すべてを Coming Soon へ
+  $('proBtn').addEventListener('click', showComingSoon);
+  $('profileUpgrade').addEventListener('click', showComingSoon);
+  $('camBtn').addEventListener('click', showComingSoon);
+  $('tosRow').addEventListener('click', showComingSoon);
+  $('cancelRow').addEventListener('click', showComingSoon);
+  $('supportRow').addEventListener('click', ()=> toast('Email support@aceit.example'));
+
+  /* ============ PROXY API ============ */
+  function base(){ return (cfg.proxyUrl||'').replace(/\/$/,''); }
+
+  async function healthCheck(){
+    try{
+      const r = await fetch(base()+'/api/health', {method:'GET'});
+      const j = await r.json();
+      return { ok:r.ok && j.ok, keyConfigured: !!j.keyConfigured, model: j.model };
+    }catch(e){ return { ok:false, keyConfigured:false, model:null }; }
+  }
+
+  async function askAI(question){
+    const body = { subject: activeSubject, grade: $('grade').value, question };
+    const r = await fetch(base()+'/api/ask', {
+      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)
+    });
+    const j = await r.json();
+    if(!r.ok || !j.ok) throw new Error(j.error || ('HTTP '+r.status));
+    return j;
+  }
+
+  function setLoading(on){
+    const btn = $('sendBtn');
+    btn.disabled = on;
+    btn.textContent = on ? 'Tutor is thinking…' : 'Ask AceIt AI';
+    $('answerArea').innerHTML = on
+      ? '<div class="loader"><div class="spinner"></div>Solving with Gemini…</div>'
+      : '';
+    $('answerBox').classList.toggle('show', on);
+  }
+
+  function showError(msg){
+    $('answerArea').innerHTML =
+      '<div class="error">⚠️ ' + escapeHtml(msg) + '</div>' +
+      '<button class="retry-btn" id="retryBtn">↻ Retry</button>';
+    $('answerBox').classList.add('show');
+    const rb = $('retryBtn');
+    if(rb) rb.addEventListener('click', ()=>{ if(answersRetry) doAsk(answersRetry.question); });
+  }
+
+  function showAnswer(j, question){
+    $('answerHead').textContent = (j.subject||activeSubject) + ' · ' + (j.grade||$('grade').value);
+    $('answerArea').innerHTML = '<div class="markdown">' + mdToHtml(j.answer || '_No answer returned._') + '</div>';
+
+    if(j.flashcard && j.flashcard.front){
+      $('answerArea').insertAdjacentHTML('beforeend',
+        '<div class="flashcard">' +
+          '<div class="fc-head">AI-Generated Flashcard <button class="add" id="addCardBtn">+ Save</button></div>' +
+          '<div class="fc-body">' +
+            '<div class="fc-front">' + escapeHtml(j.flashcard.front) + '</div>' +
+            '<div class="fc-back">' + escapeHtml(j.flashcard.back) + '</div>' +
+          '</div></div>');
+      $('addCardBtn').addEventListener('click', ()=>{
+        addCard(j.flashcard.front, j.flashcard.back, activeSubject);
+        toast('Flashcard saved ✓');
+      });
+    }
+
+    $('answerArea').insertAdjacentHTML('beforeend',
+      '<div class="actions">' +
+        '<button class="mini-btn" id="copyBtn">📋 Copy</button>' +
+        '<button class="mini-btn" id="saveCardBtn">🃏 Save as flashcard</button>' +
+      '</div>');
+    $('copyBtn').addEventListener('click', async ()=>{
+      try{ await navigator.clipboard.writeText(j.answer); toast('Copied to clipboard ✓'); }
+      catch(e){ toast('Copy failed — select text manually'); }
+    });
+    $('saveCardBtn').addEventListener('click', ()=>{
+      if(j.flashcard){ addCard(j.flashcard.front, j.flashcard.back, activeSubject); toast('Flashcard saved ✓'); }
+      else toast('No flashcard was generated');
+    });
+
+    state.history.unshift({ q: question, subj: activeSubject, grade: j.grade, time: Date.now() });
+    state.history = state.history.slice(0, 50);
+    save();
+  }
+
+  function doAsk(question){
+    answersRetry = { question };
+    resetIfNewDay();
+    if(state.questions >= FREE_LIMIT){ toast('Free daily limit reached (' + FREE_LIMIT + ' questions).'); return; }
+    setLoading(true);
+    askAI(question)
+      .then(j=>{
+        state.questions++;
+        save();
+        renderMeter();
+        showAnswer(j, question);
+      })
+      .catch(err=>{
+        showError('Could not reach the AI tutor. ' + (err && err.message || err) +
+          '\n\nCheck that server.js is running and the proxy URL is correct.');
+      })
+      .finally(()=>{
+        $('sendBtn').disabled = false;
+        $('sendBtn').textContent = 'Ask AceIt AI';
+      });
+  }
+
+  $('sendBtn').addEventListener('click', ()=>{
+    const q = $('q').value.trim();
+    if(!q){ $('q').focus(); return; }
+    doAsk(q);
+    $('q').value = '';
+  });
+  $('q').addEventListener('keydown', e=>{
+    if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); $('sendBtn').click(); }
+  });
+
+  /* ============ FLASHCARDS ============ */
+  function addCard(front, back, subj){
+    state.cards.push({ front, back, subject: subj || 'General' });
+    save();
+    renderLibrary();
+  }
+  function renderLibrary(){
+    const grid = $('libGrid'), empty = $('libEmpty');
+    grid.innerHTML = '';
+    if(state.cards.length===0){ empty.style.display='block'; return; }
+    empty.style.display='none';
+    state.cards.forEach((c, idx)=>{
+      const t = document.createElement('div');
+      t.className = 'fc-tile';
+      t.innerHTML =
+        '<span class="subj-badge">' + escapeHtml(c.subject) + '</span>' +
+        '<button class="del-btn" title="Delete">✕</button>' +
+        '<div class="fc-tile-inner">' +
+          '<div class="fc-face">' + escapeHtml(c.front) + '</div>' +
+          '<div class="fc-face back">' + escapeHtml(c.back) + '</div>' +
+        '</div>';
+      t.querySelector('.fc-tile-inner').addEventListener('click', ()=> t.classList.toggle('flipped'));
+      t.querySelector('.del-btn').addEventListener('click', ev=>{
+        ev.stopPropagation();
+        state.cards.splice(idx,1); save(); renderLibrary(); toast('Flashcard deleted');
+      });
+      grid.appendChild(t);
+    });
+  }
+
+  $('exportBtn').addEventListener('click', ()=>{
+    if(state.cards.length===0){ toast('No flashcards to export'); return; }
+    let csv = 'Subject,Front,Back\n';
+    state.cards.forEach(c=>{
+      csv += '"' + c.subject.replace(/"/g,'""') + '","' + c.front.replace(/"/g,'""') + '","' + c.back.replace(/"/g,'""') + '"\n';
+    });
+    const blob = new Blob([csv],{type:'text/csv'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'aceit-flashcards.csv';
+    a.click();
+    toast('CSV exported ✓');
+  });
+
+  /* ============ HISTORY ============ */
+  function renderHistory(){
+    const list = $('histList'), empty = $('histEmpty');
+    list.innerHTML = '';
+    if(state.history.length===0){ empty.style.display='block'; return; }
+    empty.style.display='none';
+    state.history.slice(0, 20).forEach(h=>{
+      const div = document.createElement('div');
+      div.className = 'hist-item';
+      const when = new Date(h.time).toLocaleString();
+      div.innerHTML = '<div class="q">'+escapeHtml(h.q)+'</div>' +
+        '<div class="meta">'+escapeHtml(h.subj)+' · '+escapeHtml(h.grade)+' · '+escapeHtml(when)+'</div>';
+      div.addEventListener('click', ()=>{ $('q').value = h.q; goHome(); });
+      list.appendChild(div);
+    });
+  }
+  function goHome(){
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+    document.querySelector('.tab[data-view=home]').classList.add('active');
+    $('view-home').classList.add('active');
+    $('q').focus();
+  }
+  $('clearHistBtn').addEventListener('click', ()=>{ state.history=[]; save(); renderHistory(); toast('History cleared'); });
+
+  /* ============ SETTINGS ============ */
+  function openSettings(){
+    $('proxyUrl').value = cfg.proxyUrl;
+    $('connStatus').innerHTML = '<span class="status-dot na"></span>Not tested yet';
+    $('overlay').classList.add('show');
+  }
+  function closeSettings(){ $('overlay').classList.remove('show'); }
+  $('settingsBtn').addEventListener('click', openSettings);
+  $('settingsRow').addEventListener('click', openSettings);
+  $('closeModal').addEventListener('click', closeSettings);
+  $('overlay').addEventListener('click', e=>{ if(e.target===$('overlay')) closeSettings(); });
+
+  $('testBtn').addEventListener('click', async ()=>{
+    const url = $('proxyUrl').value.trim().replace(/\/$/,'');
+    $('connStatus').innerHTML = '<span class="status-dot na"></span>Testing…';
+    try{
+      const r = await fetch(url+'/api/health');
+      const j = await r.json();
+      if(j.ok){
+        $('connStatus').innerHTML = j.keyConfigured
+          ? '<span class="status-dot ok"></span>Connected · key configured · model '+j.model
+          : '<span class="status-dot bad"></span>Proxy up, but GEMINI_API_KEY is not set on the server.';
+      } else {
+        $('connStatus').innerHTML = '<span class="status-dot bad"></span>Proxy returned an error.';
+      }
+    }catch(e){
+      $('connStatus').innerHTML = '<span class="status-dot bad"></span>Cannot reach proxy at '+url;
+    }
+  });
+
+  $('saveSettings').addEventListener('click', ()=>{
+    cfg.proxyUrl = $('proxyUrl').value.trim() || DEFAULTS.proxyUrl;
+    saveCfg();
+    renderMeter();
+    closeSettings();
+    toast('Settings saved');
+  });
+
+  /* ============ INIT ============ */
+  resetIfNewDay();
+  renderMeter();
+  renderLibrary();
+  renderHistory();
+
+  (async function initHealth(){
+    const h = await healthCheck();
+    if(h.ok){
+      $('meterText').innerHTML = (h.keyConfigured
+          ? '<b>Connected to Gemini</b> ('+(h.model||'')+')'
+          : '<span class="status-dot bad"></span>Proxy OK — server missing GEMINI_API_KEY') +
+        ' · ' + Math.max(0, FREE_LIMIT - state.questions) + '/' + FREE_LIMIT + ' questions left';
+    } else {
+      $('meterText').innerHTML = '<span class="status-dot bad"></span>Cannot reach AI proxy. Open ⚙️ Settings to set the proxy URL (default http://localhost:8787).';
+    }
+  })();
+</script>
+</body>
+</html>
