@@ -21,7 +21,7 @@ const path = require('path');
 const PORT = Number(process.env.PORT) || 8787;
 const API_KEY = process.env.GEMINI_API_KEY_WWW || process.env.GEMINI_API_KEY || '';
 const MODEL = process.env.GEMINI_MODEL || 'gemini-3.6-flash';
-const GEMINI_URL = ;
+const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -37,8 +37,8 @@ function sendJson(res, code, obj) {
 /** Build the system prompt for Gemini based on subject + grade. */
 function buildSystemPrompt(subject, grade) {
   return [
-    ,
-    ,
+    `You are AceIt, a friendly, patient, and reliable AI tutor helping a ${grade} student.`,
+    `Subject focus: ${subject}.`,
     '',
     'Rules you MUST follow:',
     '1. Give a clear, correct, step-by-step explanation appropriate for the student\'s level.',
@@ -63,7 +63,7 @@ async function callGemini(prompt) {
   });
   if (!resp.ok) {
     const body = await resp.text();
-    throw new Error();
+    throw new Error(`Gemini API error ${resp.status}: ${body.slice(0, 400)}`);
   }
   const data = await resp.json();
   return data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
@@ -82,7 +82,7 @@ function parseFlashcard(text) {
 const server = http.createServer(async (req, res) => {
   if (req.method === 'OPTIONS') return sendJson(res, 200, { ok: true });
 
-  const url = new URL(req.url, );
+  const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
 
   // Serve the app page itself so the whole thing works on ONE origin
   // (open http://localhost:8787 — no separate file:// or CORS needed).
@@ -136,7 +136,7 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(PORT, '0.0.0.0', () => {
-  console.log();
-  console.log();
+  console.log(`AceIt AI proxy running at http://localhost:${PORT}`);
+  console.log(`  Model: ${MODEL}`);
   console.log(API_KEY ? '  Gemini API key: configured ✓' : '  Gemini API key: MISSING — set GEMINI_API_KEY');
 });
